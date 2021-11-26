@@ -2,34 +2,35 @@ import Foundation
 
 struct ImpossibleError: Error {}
 
+func getBottomNodes(_ graph: MyGraph<Character>, _ exists: [Character]) -> [Character] {
+    graph.nodes.keys.filter {
+        graph.nodes[$0]!.count == 0 && !exists.contains($0)
+    }
+}
+
+func removeNodes(_ graph: MyGraph<Character>, nodes: [Character]) {
+    for key in graph.nodes.keys {
+        graph.nodes[key]! = graph.nodes[key]!.filter({ !nodes.contains($0) })
+    }
+}
+
 func calculateOrder(_ graph: MyGraph<Character>) throws -> [Character] {
     var result = [Character]()
-    for node in graph.nodes.keys {
-        guard !result.contains(node) else {
-            continue
+    while result.count < graph.nodes.count {
+        let bottomNodes = getBottomNodes(graph, result)
+        if bottomNodes.isEmpty {
+            throw ImpossibleError()
         }
 
-        var partialResult = [node]
-        var q = [node]
-        while !q.isEmpty {
-            let front = q.first!
-            for nextNode in graph.nodes[front]! {
-                if !result.contains(nextNode) && !partialResult.contains(nextNode) {
-                    partialResult.append(nextNode)
-                    q.append(nextNode)
-                }
-            }
-            q.remove(at: 0)
-        }
-
-        result += partialResult.reversed()
+        result.append(contentsOf: bottomNodes)
+        removeNodes(graph, nodes: bottomNodes)
     }
 
     return result
 }
 
 class MyGraph<T: Hashable> {
-    let nodes: [T: [T]]
+    var nodes: [T: [T]]
 
     init(nodes: [T: [T]]) {
         self.nodes = nodes
